@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/cyberbrain-dev/na-meste-api/internal/config"
+)
 
 func main() {
-	fmt.Println("Hello!")
+	cfg := config.MustLoad()
+
+	fmt.Println(cfg)
+
+	// TODO: setup logger
+
+	// TODO: init database
 }
