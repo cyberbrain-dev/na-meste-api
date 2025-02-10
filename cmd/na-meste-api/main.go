@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/cyberbrain-dev/na-meste-api/internal/config"
+	"github.com/cyberbrain-dev/na-meste-api/internal/database"
 )
 
 const (
@@ -13,13 +15,41 @@ const (
 )
 
 func main() {
+	// loading th config
 	cfg := config.MustLoad()
 
+	fmt.Println(cfg)
+
+	// launching the slogger
 	logger := setupLogger(cfg.Env)
 
-	logger.Info("Hello")
+	// some info
+	logger.Info("Launching the application...")
+	logger.Info("Connecting to Postgres database...")
 
-	// TODO: init database
+	// connecting to the db
+	db, err := database.ConnectPostgres(cfg.PostgresConnection)
+	if err != nil {
+		// logging the error
+		logger.Error(
+			"Connection was not successful",
+			slog.Any("err", err),
+		)
+		os.Exit(1)
+	}
+
+	logger.Info("Successfuly connected to Postgres database")
+
+	err = database.DisconnectPostgres(db)
+	if err != nil {
+		// logging the error
+		logger.Error(
+			"Unable to close connection to Postgres database",
+			slog.Any("err", err),
+		)
+	}
+
+	logger.Info("Successfuly disconnected Postgres database")
 }
 
 // Sets up a slog logger
