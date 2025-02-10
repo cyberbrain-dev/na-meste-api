@@ -30,7 +30,7 @@ type PostgresConnection struct {
 	Port     string `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
-	DBName   string `yaml:"db_Name"`
+	DBName   string `yaml:"db_name"`
 }
 
 // Loads a configuration
