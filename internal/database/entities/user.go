@@ -8,7 +8,7 @@ type User struct {
 	PasswordHash string `gorm:"not null"`
 	Role         string `gorm:"check:role IN ('teacher', 'scanner', 'student')"`
 
-	CollegeID uint
+	CollegeID uint `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 
 	Attendances []Attendance
 }

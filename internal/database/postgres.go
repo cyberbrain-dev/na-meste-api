@@ -58,5 +58,31 @@ func MigrateEntities(db *gorm.DB) error {
 		return fmt.Errorf("failed to migrate the entities: %w", err)
 	}
 
+	db.Exec(`
+		ALTER TABLE users DROP CONSTRAINT fk_colleges_users;
+
+		ALTER TABLE users 
+    	ADD CONSTRAINT fk_colleges_users 
+    	FOREIGN KEY (college_id) REFERENCES colleges(id) 
+		ON UPDATE CASCADE
+		ON DELETE SET NULL;
+	`)
+
+	db.Exec(`
+		ALTER TABLE attendances DROP CONSTRAINT fk_colleges_attendances;
+
+		ALTER TABLE attendances
+    	ADD CONSTRAINT fk_colleges_attendances
+    	FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE;
+	`)
+
+	db.Exec(`
+		ALTER TABLE attendances DROP CONSTRAINT fk_users_attendances;
+
+		ALTER TABLE attendances
+    	ADD CONSTRAINT fk_users_attendances
+    	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+	`)
+
 	return nil
 }
