@@ -21,10 +21,10 @@ func main() {
 	logger := setupLogger(cfg.Env)
 
 	// some info
-	logger.Info("Launching the application...")
-	logger.Info("Connecting to Postgres database...")
+	logger.Info("Launching the migration utility...")
 
 	// connecting to the db
+	logger.Info("Connecting to Postgres database...")
 	db, err := database.ConnectPostgres(cfg.PostgresConnection)
 	if err != nil {
 		// logging the error
@@ -36,11 +36,15 @@ func main() {
 	}
 	logger.Info("Successfuly connected to Postgres database")
 
-	// launch app here...
-	//
-	// ...
+	// migrating...
+	logger.Info("Starting migrating entities...")
+	if err := database.MigrateEntities(db); err != nil {
+		logger.Error("Failed to migrate entities")
+	} else {
+		logger.Info("Migration has been successful")
+	}
 
-	// disconnecting the database
+	// disconnecting...
 	err = database.DisconnectPostgres(db)
 	if err != nil {
 		// logging the error
