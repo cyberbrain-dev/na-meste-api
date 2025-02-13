@@ -6,6 +6,7 @@ import (
 
 	"github.com/cyberbrain-dev/na-meste-api/internal/config"
 	"github.com/cyberbrain-dev/na-meste-api/internal/database"
+	"github.com/cyberbrain-dev/na-meste-api/internal/database/repositories"
 )
 
 const (
@@ -39,6 +40,14 @@ func main() {
 	// launch app here...
 	//
 	// ...
+	r := repositories.NewColleges(db)
+
+	college, err := r.GetByName("tcmc")
+	if err != nil {
+		logger.Error("cannot get the college")
+	}
+
+	logger.Info("Found the college", slog.String("name", college.Name))
 
 	// disconnecting the database
 	err = database.DisconnectPostgres(db)
