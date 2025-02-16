@@ -36,9 +36,9 @@ func main() {
 	}
 	logger.Info("Successfuly connected to Postgres database")
 
-	// ? WORKING ZONE
+	// ! WORKING ZONE
 
-	// ? END OF THE WORKING ZONE
+	// ! END OF THE WORKING ZONE
 
 	// disconnecting the database
 	err = database.DisconnectPostgres(db)
