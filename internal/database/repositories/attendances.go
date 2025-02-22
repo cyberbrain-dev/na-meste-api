@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cyberbrain-dev/na-meste-api/internal/database/entities"
 	"github.com/cyberbrain-dev/na-meste-api/internal/models"
@@ -42,7 +43,7 @@ func (r *Attendances) Get(id uint) (*models.Attendance, error) {
 		return nil, fmt.Errorf("cannot get the college: %w", result.Error)
 	}
 
-	// if college has not been found
+	// if nothing has been found
 	if len(entities) == 0 {
 		return nil, nil
 	}
@@ -55,6 +56,37 @@ func (r *Attendances) Get(id uint) (*models.Attendance, error) {
 	}
 
 	return &attendance, nil
+}
+
+// Returns the attendances of the user and date span
+func (r *Attendances) GetByStudentAndDatespan(id uint, start time.Time, end time.Time) ([]*models.Attendance, error) {
+	var entities []entities.Attendance
+
+	result := r.db.Where("(user_id = ?) AND (date BETWEEN ? AND ?)", id, start, end).Find(&entities)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("cannot get the attendances: %w", result.Error)
+	}
+
+	if len(entities) == 0 {
+		return nil, nil
+	}
+
+	var attmodels []*models.Attendance
+
+	for _, entity := range entities {
+		attmodels = append(
+			attmodels,
+			&models.Attendance{
+				ID:        entity.ID,
+				UserID:    entity.UserID,
+				CollegeID: entity.CollegeID,
+				Date:      entity.Date,
+			},
+		)
+	}
+
+	return attmodels, nil
 }
 
 // Deletes an attendance by an ID
