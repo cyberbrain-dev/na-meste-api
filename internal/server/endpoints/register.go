@@ -39,12 +39,12 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 
 		// Request with all the info needed for registration
 		var req struct {
-			Username string `json:"username"`
-			Email    string `json:"email"`
-			Password string `json:"password"`
-			Role     string `json:"role"`
+			Username string `json:"username" validate:"required"`
+			Email    string `json:"email" validate:"required,email"`
+			Password string `json:"password" validate:"required"`
+			Role     string `json:"role" validate:"required"`
 
-			CollegeID uint `json:"college_id"`
+			CollegeID uint `json:"college_id" validate:"required"`
 		}
 
 		err := decoder.Decode(&req)
