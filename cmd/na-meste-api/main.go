@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/cyberbrain-dev/na-meste-api/internal/config"
 	"github.com/cyberbrain-dev/na-meste-api/internal/database"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -36,9 +42,62 @@ func main() {
 	}
 	logger.Info("Successfuly connected to Postgres database")
 
-	// ! WORKING ZONE
+	// initializing a router
+	router := chi.NewRouter()
 
-	// ! END OF THE WORKING ZONE
+	// settin' up the routes
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Все на месте!"))
+	})
+
+	logger.Info(
+		"launching the server...",
+		slog.String("address", cfg.HTTPServer.Address),
+	)
+
+	// creating a channel that is going to read interrupt signals
+	done := make(chan os.Signal, 1)
+	// making the signals be written in the channel
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// creating an HTTP server
+	srv := &http.Server{
+		Addr:         cfg.HTTPServer.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	// running the server in separate gorutine
+	// so the code that is under this goroutine can be executed
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			logger.Error("server not running", slog.Any("err", err))
+		}
+	}()
+
+	logger.Info("server started")
+
+	// waiting for signals
+	// (and blocking the execution in the goroutine of main fuction)
+	<-done
+	// once there is a signal the program gracefully shutdowns
+	logger.Info("stopping server...")
+
+	// creating a context for shutting down
+	// the server with 10s timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// gracefully shutting down the server...
+	// if it hasn't closed all the connections
+	// during the timeout it is shutdowned by force
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("failed to stop server", slog.Any("err", err))
+
+		return
+	}
 
 	// disconnecting the database
 	err = database.DisconnectPostgres(db)
@@ -51,6 +110,9 @@ func main() {
 	} else {
 		logger.Info("Successfuly disconnected Postgres database")
 	}
+
+	// final log
+	logger.Info("server stopped...")
 }
 
 // Sets up a slog logger
