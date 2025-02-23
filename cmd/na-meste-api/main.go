@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -27,20 +28,19 @@ func main() {
 	logger := setupLogger(cfg.Env)
 
 	// some info
-	logger.Info("Launching the application...")
-	logger.Info("Connecting to Postgres database...")
+	logger.Info("connecting to Postgres database...")
 
 	// connecting to the db
 	db, err := database.ConnectPostgres(cfg.PostgresConnection)
 	if err != nil {
 		// logging the error
 		logger.Error(
-			"Connection was not successful",
+			"connection was not successful",
 			slog.Any("err", err),
 		)
 		os.Exit(1)
 	}
-	logger.Info("Successfuly connected to Postgres database")
+	logger.Info("successfuly connected to Postgres database")
 
 	// initializing a router
 	router := chi.NewRouter()
@@ -73,7 +73,7 @@ func main() {
 	// so the code that is under this goroutine can be executed
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			logger.Error("server not running", slog.Any("err", err))
+			logger.Warn("server not running", slog.Any("err", err))
 		}
 	}()
 
@@ -83,6 +83,7 @@ func main() {
 	// (and blocking the execution in the goroutine of main fuction)
 	<-done
 	// once there is a signal the program gracefully shutdowns
+	fmt.Println()
 	logger.Info("stopping server...")
 
 	// creating a context for shutting down
@@ -104,11 +105,11 @@ func main() {
 	if err != nil {
 		// logging the error
 		logger.Error(
-			"Unable to close connection to Postgres database",
+			"unable to close connection to Postgres database",
 			slog.Any("err", err),
 		)
 	} else {
-		logger.Info("Successfuly disconnected Postgres database")
+		logger.Info("successfuly disconnected Postgres database")
 	}
 
 	// final log
