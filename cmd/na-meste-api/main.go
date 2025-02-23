@@ -12,7 +12,10 @@ import (
 
 	"github.com/cyberbrain-dev/na-meste-api/internal/config"
 	"github.com/cyberbrain-dev/na-meste-api/internal/database"
+	"github.com/cyberbrain-dev/na-meste-api/internal/database/repositories"
+	"github.com/cyberbrain-dev/na-meste-api/internal/server/endpoints"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -40,15 +43,24 @@ func main() {
 		)
 		os.Exit(1)
 	}
+	ru := repositories.NewUsers(db)
+
 	logger.Info("successfuly connected to Postgres database")
 
 	// initializing a router
 	router := chi.NewRouter()
 
-	// settin' up the routes
+	router.Use(middleware.RequestID)
+
+	// ! settin' up the routes
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Все на месте!"))
 	})
+
+	router.Post("/users/", endpoints.Register(logger, ru))
+
+	// !
 
 	logger.Info(
 		"launching the server...",
