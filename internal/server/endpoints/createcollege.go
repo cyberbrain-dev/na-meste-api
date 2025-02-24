@@ -10,16 +10,14 @@ import (
 	"github.com/cyberbrain-dev/na-meste-api/internal/models"
 	"github.com/cyberbrain-dev/na-meste-api/internal/models/abstractions"
 	"github.com/cyberbrain-dev/na-meste-api/pkg/errfmt"
-	"github.com/cyberbrain-dev/na-meste-api/pkg/hashing"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
 )
 
-// Returns a handler for user registration
-func RegisterUser(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
+// Returns a handler for college creation
+func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// name of the endpoint
-		ep := "endpoinds.Register"
+		ep := "endpoints.CreateCollege"
 
 		type response struct {
 			Status string `json:"status"`
@@ -37,14 +35,8 @@ func RegisterUser(logger *slog.Logger, repo abstractions.UsersRepo) http.Handler
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		// Request with all the info needed for registration
 		var req struct {
-			Username string `json:"username" validate:"required"`
-			Email    string `json:"email" validate:"required,email"`
-			Password string `json:"password" validate:"required"`
-			Role     string `json:"role" validate:"required"`
-
-			CollegeID uint `json:"college_id" validate:"required"`
+			Name string `json:"name" validate:"required"`
 		}
 
 		err := decoder.Decode(&req)
@@ -78,7 +70,7 @@ func RegisterUser(logger *slog.Logger, repo abstractions.UsersRepo) http.Handler
 			slog.Any("request", req),
 		)
 
-		if err := validator.New().Struct(&req); err != nil {
+		if err := vld.Struct(&req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
 
 			logger.Error("invalid request", slog.Any("err", err))
@@ -93,31 +85,26 @@ func RegisterUser(logger *slog.Logger, repo abstractions.UsersRepo) http.Handler
 			return
 		}
 
-		user := models.User{
-			Username:     req.Username,
-			Email:        req.Email,
-			PasswordHash: hashing.HashSHA256(req.Password),
-			Role:         req.Role,
-
-			CollegeID: req.CollegeID,
+		college := models.College{
+			Name: req.Name,
 		}
 
-		if err := repo.Create(&user); err != nil {
-			logger.Error("cannot add user to db", slog.Any("err", err))
+		if err := repo.Create(&college); err != nil {
+			logger.Error("cannot add college to db", slog.Any("err", err))
 
 			w.WriteHeader(http.StatusBadRequest)
 
 			encoder.Encode(response{
 				Status: "Error",
-				Error:  "Cannot add user to db",
+				Error:  "Cannot add college to db",
 			})
 
 			return
 		}
 
 		logger.Info(
-			"user has been successfully added",
-			slog.String("email", user.Email),
+			"college has been successfully added",
+			slog.String("name", college.Name),
 		)
 
 		w.WriteHeader(http.StatusCreated)

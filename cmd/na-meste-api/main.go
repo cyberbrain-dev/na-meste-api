@@ -43,6 +43,8 @@ func main() {
 		)
 		os.Exit(1)
 	}
+
+	rc := repositories.NewColleges(db)
 	ru := repositories.NewUsers(db)
 
 	logger.Info("successfuly connected to Postgres database")
@@ -58,7 +60,8 @@ func main() {
 		w.Write([]byte("Все на месте!"))
 	})
 
-	router.Post("/users/", endpoints.RegisterUser(logger, ru))
+	router.Post("/colleges/", endpoints.CreateCollege(logger, rc))
+	router.Post("/users/", endpoints.Register(logger, ru))
 
 	// !
 
