@@ -17,16 +17,21 @@ import (
 // Returns a handler for college creation
 func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// name of the endpoint
 		ep := "endpoints.CreateCollege"
 
+		// an anonymous struct for server's response
 		type response struct {
 			Status string `json:"status"`
 			Error  string `json:"error,omitempty"`
 		}
 
+		// decoder of the body's json
 		decoder := json.NewDecoder(r.Body)
+		// encodes the response to the response body
 		encoder := json.NewEncoder(w)
 
+		// setting the type of response
 		w.Header().Set("Content-Type", "application/json")
 
 		// editing the logger
@@ -35,11 +40,14 @@ func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.Han
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
+		// request with all the info needed for college creation
 		var req struct {
 			Name string `json:"name" validate:"required"`
 		}
 
+		// decoding the request's body
 		err := decoder.Decode(&req)
+		// if the body's empty
 		if errors.Is(err, io.EOF) {
 			logger.Error("request body is empty")
 
@@ -52,6 +60,7 @@ func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.Han
 
 			return
 		}
+		// if another error occurs
 		if err != nil {
 			logger.Error("cannot decode the request body")
 
@@ -65,11 +74,13 @@ func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.Han
 			return
 		}
 
+		// logging...
 		logger.Info(
 			"request body decoded",
 			slog.Any("request", req),
 		)
 
+		// validating the request
 		if err := vld.Struct(&req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
 
@@ -85,10 +96,13 @@ func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.Han
 			return
 		}
 
+		// creating a college model
 		college := models.College{
 			Name: req.Name,
 		}
 
+		// trying to write college to a db
+		// and handling an error if the one occurs
 		if err := repo.Create(&college); err != nil {
 			logger.Error("cannot add college to db", slog.Any("err", err))
 
@@ -102,11 +116,13 @@ func CreateCollege(logger *slog.Logger, repo abstractions.CollegesRepo) http.Han
 			return
 		}
 
+		// logging...
 		logger.Info(
 			"college has been successfully added",
 			slog.String("name", college.Name),
 		)
 
+		// OK response
 		w.WriteHeader(http.StatusCreated)
 
 		encoder.Encode(response{

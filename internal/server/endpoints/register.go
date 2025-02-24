@@ -23,14 +23,18 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 		// name of the endpoint
 		ep := "endpoinds.Register"
 
+		// an anonymous struct for server's response
 		type response struct {
 			Status string `json:"status"`
 			Error  string `json:"error,omitempty"`
 		}
 
+		// decoder of the body's json
 		decoder := json.NewDecoder(r.Body)
+		// encodes the response to the response body
 		encoder := json.NewEncoder(w)
 
+		// setting the type of response
 		w.Header().Set("Content-Type", "application/json")
 
 		// editing the logger
@@ -39,7 +43,7 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		// Request with all the info needed for registration
+		// request with all the info needed for registration
 		var req struct {
 			Username string `json:"username" validate:"required"`
 			Email    string `json:"email" validate:"required,email"`
@@ -49,7 +53,9 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			CollegeID uint `json:"college_id" validate:"required"`
 		}
 
+		// decoding the request's body
 		err := decoder.Decode(&req)
+		// if the body's empty
 		if errors.Is(err, io.EOF) {
 			logger.Error("request body is empty")
 
@@ -62,6 +68,7 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 
 			return
 		}
+		// if another error occurs
 		if err != nil {
 			logger.Error("cannot decode the request body")
 
@@ -75,11 +82,13 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			return
 		}
 
+		// logging...
 		logger.Info(
 			"request body decoded",
 			slog.Any("request", req),
 		)
 
+		// validating the request
 		if err := vld.Struct(&req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
 
@@ -95,6 +104,7 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			return
 		}
 
+		// creating a user model
 		user := models.User{
 			Username:     req.Username,
 			Email:        req.Email,
@@ -104,6 +114,8 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			CollegeID: req.CollegeID,
 		}
 
+		// trying to write user to a db
+		// and handling an error if the one occurs
 		if err := repo.Create(&user); err != nil {
 			logger.Error("cannot add user to db", slog.Any("err", err))
 
@@ -117,11 +129,13 @@ func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc
 			return
 		}
 
+		// logging...
 		logger.Info(
 			"user has been successfully added",
 			slog.String("email", user.Email),
 		)
 
+		// OK response
 		w.WriteHeader(http.StatusCreated)
 
 		encoder.Encode(response{
