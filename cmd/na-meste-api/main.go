@@ -58,7 +58,7 @@ func main() {
 		w.Write([]byte("Все на месте!"))
 	})
 
-	router.Post("/users/", endpoints.Register(logger, ru))
+	router.Post("/users/", endpoints.RegisterUser(logger, ru))
 
 	// !
 

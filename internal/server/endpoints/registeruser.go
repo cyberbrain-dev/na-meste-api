@@ -16,7 +16,7 @@ import (
 )
 
 // Returns a handler for user registration
-func Register(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
+func RegisterUser(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// name of the endpoint
 		ep := "endpoinds.Register"
