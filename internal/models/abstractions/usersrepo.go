@@ -8,7 +8,7 @@ type UsersRepo interface {
 	Create(u *models.User) error
 
 	// Returns a user with the ID passed if the one exists
-	Get(id uint) (*models.User, error)
+	Get(id string) (*models.User, error)
 
 	// Updates user with the ID passed
 	Update(id uint, username *string, email *string) (uint, error)
