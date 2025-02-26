@@ -62,6 +62,7 @@ func main() {
 
 	router.Post("/colleges/", endpoints.CreateCollege(logger, rc))
 	router.Post("/users/", endpoints.Register(logger, ru))
+	router.Post("/login/", endpoints.Login(logger, ru))
 
 	// !
 

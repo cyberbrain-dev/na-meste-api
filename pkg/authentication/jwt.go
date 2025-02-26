@@ -29,5 +29,5 @@ func GenerateJWT(id uint, role string) (string, error) {
 	// creating an unsigned token
 	unsignedToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return unsignedToken.SignedString("my-secret-key")
+	return unsignedToken.SignedString([]byte("my-secret-key"))
 }
