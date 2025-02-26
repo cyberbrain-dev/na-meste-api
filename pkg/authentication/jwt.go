@@ -8,15 +8,17 @@ import (
 
 // Contains payload of a JWT
 type Claims struct {
-	Role string `json:"role"`
+	UserID uint   `json:"user_id"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // Generates a JWT with the role encoded
-func GenerateJWT(role string) (string, error) {
+func GenerateJWT(id uint, role string) (string, error) {
 	// creating a payload
 	claims := Claims{
-		Role: role,
+		UserID: id,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
