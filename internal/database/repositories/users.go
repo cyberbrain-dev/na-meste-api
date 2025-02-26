@@ -32,10 +32,10 @@ func (r *Users) Create(u *models.User) error {
 	return result.Error
 }
 
-func (r *Users) Get(id uint) (*models.User, error) {
+func (r *Users) Get(email string) (*models.User, error) {
 	var entities []entities.User
 
-	result := r.db.Where("id = ?", id).Find(&entities)
+	result := r.db.Where("email = ?", email).Find(&entities)
 	if result.Error != nil {
 		return nil, fmt.Errorf("cannot get the user: %w", result.Error)
 	}
