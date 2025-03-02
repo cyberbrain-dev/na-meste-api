@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -30,4 +31,27 @@ func GenerateJWT(id uint, role string) (string, error) {
 	unsignedToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return unsignedToken.SignedString([]byte("my-secret-key"))
+}
+
+// Parses and verifies the JWT
+func ParseJWT(tokenString string) (*Claims, error) {
+	// parsing the token
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&Claims{},
+		func(t *jwt.Token) (interface{}, error) {
+			return "my-secret-key", nil
+		},
+	)
+	// if smth went wrong
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JWT: %w", err)
+	}
+
+	// getting the claims
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid or expired token")
 }
