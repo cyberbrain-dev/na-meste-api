@@ -31,7 +31,7 @@ func CheckRole(logger *slog.Logger, requiredRole string, next http.HandlerFunc) 
 		}
 
 		// getting the token itself without "Bearer " prefix
-		tokenString := strings.TrimPrefix("Bearer ", authHeader)
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		// if there's no Bearer prefix
 		if tokenString == authHeader {
 			logger.Error("invalid Authorization format")
@@ -46,6 +46,13 @@ func CheckRole(logger *slog.Logger, requiredRole string, next http.HandlerFunc) 
 				"failed to parse the token",
 				slog.Any("err", err),
 			)
+
+			http.Error(
+				w,
+				"failed to parse the token",
+				http.StatusInternalServerError,
+			)
+			return
 		}
 
 		// checking the role

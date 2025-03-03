@@ -14,6 +14,8 @@ import (
 	"github.com/cyberbrain-dev/na-meste-api/internal/database"
 	"github.com/cyberbrain-dev/na-meste-api/internal/database/repositories"
 	"github.com/cyberbrain-dev/na-meste-api/internal/server/endpoints"
+	myMw "github.com/cyberbrain-dev/na-meste-api/internal/server/middleware"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -46,6 +48,7 @@ func main() {
 
 	rc := repositories.NewColleges(db)
 	ru := repositories.NewUsers(db)
+	ra := repositories.NewAttendances(db)
 
 	logger.Info("successfuly connected to Postgres database")
 
@@ -53,6 +56,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
+	router.Use(middleware.Recoverer)
 
 	// ! settin' up the routes
 
@@ -64,6 +68,15 @@ func main() {
 	router.Post("/users/", endpoints.Register(logger, ru))
 	router.Post("/login/", endpoints.Login(logger, ru))
 
+	// registring the attendance creation endpoint and setting a middleware
+	router.Post("/attendances/", myMw.CheckRole(
+		logger,
+		"scanner",
+		endpoints.CreateAttendance(
+			logger, ra,
+		),
+	),
+	)
 	// !
 
 	logger.Info(

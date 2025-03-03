@@ -6,25 +6,24 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/cyberbrain-dev/na-meste-api/internal/models"
 	"github.com/cyberbrain-dev/na-meste-api/internal/models/abstractions"
-	"github.com/cyberbrain-dev/na-meste-api/pkg/authentication"
 	"github.com/cyberbrain-dev/na-meste-api/pkg/errfmt"
-	"github.com/cyberbrain-dev/na-meste-api/pkg/hashing"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
 )
 
-// Provides an endpoint for logging in the application and getting the JWT
-func Login(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
+// An andpoint for registring an attendance
+func CreateAttendance(logger *slog.Logger, repo abstractions.AttendancesRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// name of the endpoint
-		ep := "endpoinds.Login"
+		ep := "endpoints.CreateAttendance"
 
 		// a struct for server's response
 		type response struct {
 			Status string `json:"status"`
-			Token  string `json:"jwt,omitempty"`
 			Error  string `json:"error,omitempty"`
 		}
 
@@ -42,10 +41,11 @@ func Login(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		// client's request for logging in
+		// client's request for creating the attendance
 		var req struct {
-			Email    string `json:"email" validate:"required,email"`
-			Password string `json:"password" validate:"required"`
+			StudentID uint      `json:"student_id" validate:"required"`
+			CollegeID uint      `json:"college_id" validate:"required"`
+			Date      time.Time `json:"date" validate:"required"`
 		}
 
 		// decoding the request's body
@@ -99,60 +99,34 @@ func Login(logger *slog.Logger, repo abstractions.UsersRepo) http.HandlerFunc {
 			return
 		}
 
-		user, err := repo.Get(req.Email)
-		// if the user ain't exist
-		if err != nil {
-			logger.Error("user with this email does not exist")
-
-			w.WriteHeader(http.StatusNotFound)
-
-			encoder.Encode(response{
-				Status: "Error",
-				Error:  "User with this email does not exist",
-			})
-
-			return
+		// creating the attendance
+		attendance := models.Attendance{
+			UserID:    req.StudentID,
+			CollegeID: req.CollegeID,
+			Date:      req.Date,
 		}
 
-		// checking the password
-		reqPasswordHash := hashing.HashSHA256(req.Password)
-		// if the password is incorrect
-		if reqPasswordHash != user.PasswordHash {
-			logger.Error("password is incorrect")
-
-			w.WriteHeader(http.StatusUnauthorized)
-
-			encoder.Encode(response{
-				Status: "Error",
-				Error:  "Password is incorrect",
-			})
-
-			return
-		}
-
-		// if everything is fine, generating a JWT for this user
-		token, err := authentication.GenerateJWT(user.ID, user.Role)
-		// if smth goes wrong
-		if err != nil {
-			logger.Error("failed to generate the JWT", slog.Any("err", err))
+		// adding the attendance to the database
+		if err := repo.Create(&attendance); err != nil {
+			logger.Error("failed to create the attendance")
 
 			w.WriteHeader(http.StatusInternalServerError)
 
 			encoder.Encode(response{
 				Status: "Error",
-				Error:  "Failed to log in, try later again",
+				Error:  "Failed to create the attendance",
 			})
 
 			return
 		}
 
-		logger.Info("successfully logged in", slog.Any("user_id", user.ID))
+		// if everything is fine
+		logger.Info("failed to create the attendance")
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 
 		encoder.Encode(response{
 			Status: "OK",
-			Token:  token,
 		})
 
 		return

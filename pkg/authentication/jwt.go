@@ -40,7 +40,7 @@ func ParseJWT(tokenString string) (*Claims, error) {
 		tokenString,
 		&Claims{},
 		func(t *jwt.Token) (interface{}, error) {
-			return "my-secret-key", nil
+			return []byte("my-secret-key"), nil
 		},
 	)
 	// if smth went wrong
