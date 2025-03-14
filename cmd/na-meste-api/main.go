@@ -75,8 +75,16 @@ func main() {
 		endpoints.CreateAttendance(
 			logger, ra,
 		),
-	),
-	)
+	))
+
+	// registring the attendance getter endpoint and setting a middleware
+	router.Get("/attendances/", myMw.CheckRole(
+		logger,
+		"teacher",
+		endpoints.GetAttendances(
+			logger, ra,
+		),
+	))
 	// !
 
 	logger.Info(
