@@ -65,8 +65,8 @@ func main() {
 	})
 
 	router.Post("/colleges/", endpoints.CreateCollege(logger, rc))
-	router.Post("/users/", endpoints.Register(logger, ru))
-	router.Post("/login/", endpoints.Login(logger, ru))
+	router.Post("/auth/register", endpoints.Register(logger, ru))
+	router.Post("/auth/login/", endpoints.Login(logger, ru))
 
 	// registring the attendance creation endpoint and setting a middleware
 	router.Post("/attendances/", myMw.CheckRole(
