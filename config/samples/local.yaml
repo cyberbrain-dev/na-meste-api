@@ -1,0 +1,13 @@
+env: "local"
+
+http_server:
+  address: "localhost:0000"
+  timeout: 0s
+  idle_timeout: 0s
+
+postgres_connection:
+  host: "localhost"
+  port: "0000"
+  username: "name"
+  password: "pswrd"
+  db_name: "db_name"
